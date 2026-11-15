@@ -18,6 +18,12 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License">
 </p>
 
+<p align="center">
+  <a href="https://github.com/mohammedarsath-ars/InpuLync/releases/latest">
+    <img src="https://img.shields.io/badge/📥%20Download-InpuLync%20v1.3.0%20APK-brightgreen?style=for-the-badge&logo=android" alt="Download APK">
+  </a>
+</p>
+
 ---
 
 ## Highlights
