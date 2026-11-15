@@ -8,7 +8,7 @@ the gamepad collection and Steam may need to be restarted after it appears.
 
 1. On the phone, open **InpuLync → GAMEPAD** and confirm the header says
    **BT · INPUT CONNECTED ✓**.
-2. If this is the first build with controller support, remove **Galaxy A05s**
+2. If this is the first build with controller support, remove **InpuLync**
    from Windows Bluetooth settings and pair it again. Windows caches the old
    keyboard-only HID descriptor.
 3. Press **Win+R**, enter `joy.cpl`, and open **HID-compliant game controller →

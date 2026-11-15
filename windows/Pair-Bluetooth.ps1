@@ -1,5 +1,5 @@
 param(
-    [string]$DeviceName = 'Galaxy A05s',
+    [string]$DeviceName = 'InpuLync',
     [string]$Address,
     [switch]$Yes
 )

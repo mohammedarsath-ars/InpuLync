@@ -14,7 +14,7 @@ body:
     id: phone
     attributes:
       label: Phone and Android version
-      placeholder: Galaxy A05s, Android 14
+      placeholder: Android 14 / Samsung Galaxy / Pixel
     validations:
       required: true
   - type: input

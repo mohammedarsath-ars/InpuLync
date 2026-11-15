@@ -4,7 +4,7 @@ using Windows.Devices.Enumeration;
 // Usage: BluetoothPairingHelper [device name] [--address AA:BB:CC:DD:EE:FF] [--yes]
 // The device is chosen by Bluetooth address when given. With a name only, the match must be
 // unique and you confirm it, so a look-alike device nearby cannot be paired by accident.
-string wantedName = "Galaxy A05s";
+string wantedName = "InpuLync";
 string? wantedAddress = null;
 bool skipTargetPrompt = false;
 for (int i = 0; i < args.Length; i++)

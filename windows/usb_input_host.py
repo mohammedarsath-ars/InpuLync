@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Receive A05s input events through an adb USB port-forward and inject them on Windows."""
+"""Receive InpuLync input events through an adb USB port-forward and inject them on Windows."""
 
 from __future__ import annotations
 
