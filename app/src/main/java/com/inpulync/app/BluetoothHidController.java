@@ -73,8 +73,8 @@ final class BluetoothHidController {
     private int consecutiveFailures;
     private boolean receiversRegistered;
 
-    // Mouse / gamepad rate limiting. Everything below runs on the main thread.
-    private static final int MIN_REPORT_INTERVAL_MS = 8;
+    // Mouse / gamepad rate limiting: 4 ms interval = 250 Hz high-speed reporting.
+    private static final int MIN_REPORT_INTERVAL_MS = 4;
     private int pendingDx;
     private int pendingDy;
     private int pendingWheel;
@@ -455,10 +455,14 @@ final class BluetoothHidController {
         pendingPan += pan;
         long elapsed = SystemClock.uptimeMillis() - lastMouseSendAt;
         if (elapsed >= MIN_REPORT_INTERVAL_MS) {
+            if (mouseFlushScheduled) {
+                handler.removeCallbacks(mouseFlush);
+                mouseFlushScheduled = false;
+            }
             flushMouse();
         } else if (!mouseFlushScheduled) {
             mouseFlushScheduled = true;
-            handler.postDelayed(mouseFlush, MIN_REPORT_INTERVAL_MS - elapsed + 1);
+            handler.postDelayed(mouseFlush, Math.max(1, MIN_REPORT_INTERVAL_MS - elapsed));
         }
     }
 
@@ -512,6 +516,10 @@ final class BluetoothHidController {
         if (java.util.Arrays.equals(report, lastGamepadReport)) return;
         long elapsed = SystemClock.uptimeMillis() - lastGamepadSendAt;
         if (elapsed >= MIN_REPORT_INTERVAL_MS) {
+            if (gamepadFlushScheduled) {
+                handler.removeCallbacks(gamepadFlush);
+                gamepadFlushScheduled = false;
+            }
             pendingGamepadReport = null;
             writeGamepad(report);
         } else {
@@ -520,7 +528,7 @@ final class BluetoothHidController {
             pendingGamepadReport = report;
             if (!gamepadFlushScheduled) {
                 gamepadFlushScheduled = true;
-                handler.postDelayed(gamepadFlush, MIN_REPORT_INTERVAL_MS - elapsed + 1);
+                handler.postDelayed(gamepadFlush, Math.max(1, MIN_REPORT_INTERVAL_MS - elapsed));
             }
         }
     }

@@ -68,7 +68,7 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
     private ShortcutRunner shortcuts;
     private MacroPanel macroPanel;
     private int hostLayout;
-    private int accelLevel;
+    private int accelLevel = PointerAcceleration.MEDIUM;
     private Button settingsMenuButton;
     private boolean auroraAnimated = true;
     private volatile int mode = MODE_OFF;
@@ -95,9 +95,9 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
     private PopupWindow bluetoothPopup;
     private final Map<String, TextView> settingValueViews = new HashMap<>();
     private int dragHoldMs = 500;
-    private int pointerPercent = 100;
-    private int scrollPercent = 100;
-    private int repeatMs = 55;
+    private int pointerPercent = 130;
+    private int scrollPercent = 120;
+    private int repeatMs = 50;
     private boolean hapticsOn = true;
     private boolean laptopClicksOn = true;
     private boolean controllerLayout;
@@ -775,9 +775,9 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         SharedPreferences values = getSharedPreferences("controls", MODE_PRIVATE);
         mode = values.getInt("active_mode", MODE_BLUETOOTH);
         dragHoldMs = values.getInt("drag_hold_ms", 500);
-        pointerPercent = values.getInt("pointer_percent", 100);
-        scrollPercent = values.getInt("scroll_percent", 100);
-        repeatMs = values.getInt("repeat_ms", 55);
+        pointerPercent = values.getInt("pointer_percent", 130);
+        scrollPercent = values.getInt("scroll_percent", 120);
+        repeatMs = values.getInt("repeat_ms", 50);
         hapticsOn = values.getBoolean("haptics", true);
         laptopClicksOn = values.getBoolean("laptop_clicks", true);
         controllerLayout = values.getBoolean("controller_layout", false);
@@ -785,7 +785,7 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         gamepadLabelStyle = values.getInt("gamepad_label_style", 0);
         auroraAnimated = values.getBoolean("aurora_animated", true);
         hostLayout = values.getInt("host_layout", KeyStroke.LAYOUT_US);
-        accelLevel = values.getInt("accel_level", PointerAcceleration.OFF);
+        accelLevel = values.getInt("accel_level", PointerAcceleration.MEDIUM);
     }
 
     private void saveSettings() {

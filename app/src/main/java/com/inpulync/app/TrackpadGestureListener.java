@@ -80,7 +80,6 @@ final class TrackpadGestureListener implements View.OnTouchListener {
         multiFinger = false;
         threeFinger = false;
         gestureFired = false;
-        view.animate().scaleX(1f).scaleY(1f).setDuration(75).start();
         host.trackpadVisual(view, VISUAL_IDLE);
     }
 
@@ -92,7 +91,6 @@ final class TrackpadGestureListener implements View.OnTouchListener {
                 moveRemainderX = moveRemainderY = scrollRemainder = panRemainder = 0f;
                 lastMoveTime = event.getEventTime();
                 host.haptic(view, HapticFeedbackConstants.VIRTUAL_KEY);
-                view.animate().scaleX(0.992f).scaleY(0.992f).setDuration(55).start();
                 host.trackpadVisual(view, VISUAL_PRESSED);
                 long now = SystemClock.uptimeMillis();
                 fingerDown = true;
@@ -133,11 +131,11 @@ final class TrackpadGestureListener implements View.OnTouchListener {
                 return true;
 
             case MotionEvent.ACTION_MOVE:
-                int rawDx = Math.round(x - lastX);
-                int rawDy = Math.round(y - lastY);
+                float deltaX = x - lastX;
+                float deltaY = y - lastY;
                 long elapsed = Math.max(1L, Math.min(50L, event.getEventTime() - lastMoveTime));
                 lastMoveTime = event.getEventTime();
-                travel += Math.abs(rawDx) + Math.abs(rawDy);
+                travel += Math.abs(deltaX) + Math.abs(deltaY);
                 if (threeFinger || event.getPointerCount() >= 3) {
                     if (!threeFinger) {
                         threeFinger = true;
@@ -146,25 +144,25 @@ final class TrackpadGestureListener implements View.OnTouchListener {
                     }
                     detectThreeFingerSwipe(view, x - gestureStartX, y - gestureStartY);
                 } else if (event.getPointerCount() >= 2) {
-                    if (Math.abs(rawDx) > Math.abs(rawDy) * 1.5f) {
+                    if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5f) {
                         // Mostly sideways: horizontal scroll (swipe right scrolls right).
-                        panRemainder += rawDx * host.scrollPercent() / 300f;
+                        panRemainder += deltaX * host.scrollPercent() / 300f;
                         int panSteps = (int) panRemainder;
                         panRemainder -= panSteps;
                         if (panSteps != 0) host.scrollHorizontal(clamp(panSteps));
                     } else {
-                        scrollRemainder += -rawDy * host.scrollPercent() / 300f;
+                        scrollRemainder += -deltaY * host.scrollPercent() / 300f;
                         int scrollSteps = (int) scrollRemainder;
                         scrollRemainder -= scrollSteps;
                         if (scrollSteps != 0) host.scroll(clamp(scrollSteps));
                     }
                 } else {
                     if (!dragging && travel >= host.dp(12)) handler.removeCallbacks(longPress);
-                    float speed = (float) Math.hypot(rawDx, rawDy) /
+                    float speed = (float) Math.hypot(deltaX, deltaY) /
                             Math.max(1, host.dp(1)) / elapsed;
                     float gain = PointerAcceleration.gain(host.accelLevel(), speed);
-                    moveRemainderX += rawDx * host.pointerPercent() / 100f * gain;
-                    moveRemainderY += rawDy * host.pointerPercent() / 100f * gain;
+                    moveRemainderX += deltaX * (host.pointerPercent() / 100f) * gain;
+                    moveRemainderY += deltaY * (host.pointerPercent() / 100f) * gain;
                     int moveX = (int) moveRemainderX;
                     int moveY = (int) moveRemainderY;
                     moveRemainderX -= moveX;

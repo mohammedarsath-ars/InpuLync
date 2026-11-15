@@ -26,7 +26,7 @@ final class AuroraView extends View {
 
     private final Runnable tick = new Runnable() {
         @Override public void run() {
-            if (!running) return;
+            if (!running || !animated || !Theme.current.glass) return;
             invalidate();
             postDelayed(this, FRAME_MS);
         }
