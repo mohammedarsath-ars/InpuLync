@@ -114,13 +114,29 @@ final class BluetoothHidController {
                     dropStaleProfile();
                 }
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                BluetoothDevice device = Build.VERSION.SDK_INT >= 33
+                        ? intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice.class)
+                        : intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 BluetoothDevice preferred = preferredHost();
                 if (device != null && device.equals(preferred) && !isInputLive()) {
                     // The PC just woke up or came back in range: connect input right away.
                     recoveryAttempts = 0;
                     lastConnectRequestAt = 0;
-                    handler.postDelayed(BluetoothHidController.this::ensureReady, 400);
+                    handler.postDelayed(BluetoothHidController.this::ensureReady, 300);
+                }
+            } else if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+                if (bondState == BluetoothDevice.BOND_BONDED) {
+                    BluetoothDevice device = Build.VERSION.SDK_INT >= 33
+                            ? intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice.class)
+                            : intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    if (device != null) {
+                        Log.d(TAG, "New device bonded: " + safeName(device));
+                        rememberHost(device);
+                        recoveryAttempts = 0;
+                        lastConnectRequestAt = 0;
+                        handler.postDelayed(BluetoothHidController.this::ensureReady, 300);
+                    }
                 }
             }
         }
@@ -674,14 +690,22 @@ final class BluetoothHidController {
         if (!hasPermission() || adapter == null) return null;
         String address = context.getSharedPreferences("controls", Context.MODE_PRIVATE)
                 .getString("last_hid_host", null);
-        if (address == null) return null;
-        try {
-            BluetoothDevice device = adapter.getRemoteDevice(address);
-            return adapter.getBondedDevices().contains(device) ? device : null;
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "Saved Bluetooth host address is invalid", e);
-            return null;
+        if (address != null) {
+            try {
+                BluetoothDevice device = adapter.getRemoteDevice(address);
+                if (adapter.getBondedDevices().contains(device)) return device;
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "Saved Bluetooth host address is invalid", e);
+            }
         }
+        // Zero-click connect: if only one PC is paired, automatically target and remember it.
+        List<BluetoothDevice> candidates = hostCandidates();
+        if (candidates.size() == 1) {
+            BluetoothDevice single = candidates.get(0);
+            rememberHost(single);
+            return single;
+        }
+        return null;
     }
 
     private void rememberHost(BluetoothDevice device) {
@@ -693,8 +717,8 @@ final class BluetoothHidController {
     private void scheduleRecovery() {
         if (destroyed || !foreground || !active || recoveryScheduled || isInputLive()) return;
         recoveryScheduled = true;
-        // Retry quickly at first, then back off so a PC that is off does not drain the phone.
-        long delay = recoveryAttempts < 6 ? 1500 : recoveryAttempts < 16 ? 3500 : 8000;
+        // Ultra-fast 800ms initial retry for instant wake/sleep recovery, then graceful backoff.
+        long delay = recoveryAttempts < 2 ? 800 : recoveryAttempts < 8 ? 1500 : recoveryAttempts < 18 ? 3500 : 8000;
         handler.postDelayed(() -> {
             recoveryScheduled = false;
             recoveryAttempts++;
@@ -708,6 +732,7 @@ final class BluetoothHidController {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         context.registerReceiver(receiver, filter);
         receiversRegistered = true;
     }

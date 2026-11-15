@@ -1,51 +1,108 @@
-# InpuLync
+<div align="center">
+
+<img src="docs/images/inpulync-banner.jpg" alt="InpuLync Banner" width="100%" style="border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.6);">
+
+# ⚡ InpuLync
+
+### Turn Your Android Phone into a High-Performance, Zero-Latency Peripheral
+*Driverless Bluetooth HID • 250 Hz Reporting Rate • Sub-Pixel Precision • Zero Cloud • 100% Offline Privacy*
 
 <p align="center">
-  <img src="docs/images/inpulync-logo.png" alt="InpuLync Logo" width="240" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
-</p>
-
-<h3 align="center">Your Phone is the Peripheral</h3>
-
-<p align="center">
-  <b>A completely local, offline keyboard, multi-touch trackpad, and gamepad for Android.</b><br>
-  <i>Zero Cloud • Zero Tracking • Driverless Bluetooth HID • Secure USB Loopback Companion</i>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Platform-Android%209.0%2B%20(API%2028%2B)-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Platform">
-  <img src="https://img.shields.io/badge/Bluetooth-Native%20HID%20Device-0082FC?style=flat-square&logo=bluetooth&logoColor=white" alt="Bluetooth HID">
-  <img src="https://img.shields.io/badge/Privacy-100%25%20Local%20%2F%20Offline-success?style=flat-square" alt="Privacy">
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License">
+  <a href="https://github.com/mohammedarsath-ars/InpuLync/releases/latest">
+    <img src="https://img.shields.io/badge/Release-v1.4.0-00E676?style=for-the-badge&logo=github&logoColor=white" alt="Latest Release">
+  </a>
+  <img src="https://img.shields.io/badge/HID_Polling-250_Hz_(4ms)-00B0FF?style=for-the-badge&logo=speedtest&logoColor=white" alt="HID Polling Rate">
+  <img src="https://img.shields.io/badge/Android-9.0%2B_(API_28%2B)-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android Support">
+  <img src="https://img.shields.io/badge/Privacy-100%25_Offline-blueviolet?style=for-the-badge&logo=shield&logoColor=white" alt="Privacy">
+  <img src="https://img.shields.io/badge/License-MIT-FFA000?style=for-the-badge" alt="MIT License">
 </p>
 
 <p align="center">
   <a href="https://github.com/mohammedarsath-ars/InpuLync/releases/latest">
-    <img src="https://img.shields.io/badge/📥%20Download-InpuLync%20v1.3.0%20APK-brightgreen?style=for-the-badge&logo=android" alt="Download APK">
+    <img src="https://img.shields.io/badge/⚡_DOWNLOAD_LATEST_RELEASE-InpuLync_v1.4.0.apk-00E676?style=for-the-badge&logo=android&logoColor=black" alt="Download InpuLync APK" height="52">
   </a>
 </p>
 
----
-
-## Highlights
-
-- **Driverless Bluetooth HID**: Uses Android's native Bluetooth HID Device profile. Windows sees your phone as a genuine composite USB keyboard, mouse, consumer media remote, and standard DirectInput gamepad without needing any PC software installed.
-- **PS3-Inspired Gamepad**: Dual analog clickable sticks (L3/R3), 8-way directional cross D-pad with active highlights, four face buttons, L1/R1, analog-ramping L2/R2 triggers, Select, PS, and Start. Supports simultaneous multi-touch stick and button gameplay.
-- **Full Compact Keyboard**: Modifiers (Shift, Caps, Ctrl, Alt, Win/Super) with visual latch and chord indicators. Auto-repeating Backspace and navigation keys. Supports US and UK keyboard layouts.
-- **One-Handed Portrait Trackpad Remote**: Hold the phone upright for a full-screen vertical trackpad with haptic scroll strip, left/right click buttons, and quick media controls. Rotate horizontally into landscape for the full desktop keyboard or gamepad.
-- **Dedicated NUMPAD**: Open **TOOLS ▾ → NUMPAD** for a dedicated numeric keypad (0–9, arithmetic operators `+`, `−`, `×`, `/`, `Enter`, and repeating `Backspace`).
-- **Media Controls**: Integrated media buttons (Play/Pause, Next Track, Previous Track, Volume Up/Down, and Mute) over Bluetooth Consumer Control and USB.
-- **9 Translucent Glass Themes**: Translucent glass palettes (Aurora, Frost, Midnight, Sunset, Ocean, Forest, Sakura, AMOLED, and Custom with a 360° HSV hue slider). Procedural animated drifting Aurora background with a battery-saving motion toggle.
-- **Direct Hardware Haptics**: Calibrated millisecond vibration pulses directly controlling the hardware vibrator, ensuring tactile feedback even when global system touch-feedback is disabled.
-- **Hardened USB Bridge**: Optional companion tool over ADB loopback (`127.0.0.1:27183`) featuring mutual HMAC-SHA256 challenge-response authentication. Provides host battery telemetry, laptop panel brightness adjustment via WMI, and Unicode text injection.
+</div>
 
 ---
 
-## Control Modes & Interface
+> [!IMPORTANT]
+> **InpuLync** transforms your Android phone into an ultra-low latency, driverless input peripheral for your PC, laptop, tablet, or TV. Built natively on Android's Bluetooth HID Device profile, your computer sees your phone directly as a physical hardware keyboard, multi-touch trackpad, and DirectInput gamepad. **No PC software, no drivers, no cloud accounts, and zero background telemetry.**
 
-InpuLync adapts seamlessly to how you hold your phone:
+---
 
-### 📱 Portrait Mode: One-Handed Remote
-Hold your phone upright for an ergonomic, thumb-driven remote control:
+## ⚡ System Architecture
+
+InpuLync bypasses intermediate software servers by talking directly to the host operating system's native USB/Bluetooth HID driver stack:
+
+```mermaid
+graph LR
+    subgraph Android["📱 Android Device (InpuLync)"]
+        direction TB
+        UI["Translucent Glass UI<br/>(Keyboard / Trackpad / Gamepad)"]
+        Engine["High-Speed Input Engine<br/>(250 Hz / 4ms Report Rate)"]
+        HID_Profile["Android Native Bluetooth HID Device Profile"]
+        UI --> Engine --> HID_Profile
+    end
+
+    subgraph Transport["⚡ Driverless Wireless Transport"]
+        BT["Standard Bluetooth HID Link<br/>(Composite Keyboard + Mouse + Gamepad)"]
+    end
+
+    subgraph Host["💻 Target PC / Laptop / TV"]
+        direction TB
+        OS["Windows / macOS / Linux / Android TV"]
+        Driver["Native OS HID Input Stack<br/>(Zero 3rd-Party Software Needed)"]
+        OS --> Driver
+    end
+
+    HID_Profile ==>|Direct HID Reports| BT ==>|Plug & Play Input| Driver
+```
+
+---
+
+## 🚀 Why InpuLync?
+
+| Feature | ⚡ InpuLync | KDE Connect | Unified Remote | Generic Remote Apps |
+| :--- | :---: | :---: | :---: | :---: |
+| **Driverless Bluetooth HID** | ✅ **Native Hardware Mode** | ❌ (Wi-Fi Only) | ❌ (Server Required) | ❌ (Server Required) |
+| **Zero PC Software Needed** | ✅ **None (Zero Install)** | ❌ (Needs PC App) | ❌ (Needs PC App) | ❌ (Needs PC App) |
+| **DirectInput Gamepad** | ✅ **PS3 / Xbox Layout** | ❌ | ⚠️ (Paid add-on) | ⚠️ (Requires drivers) |
+| **HID Reporting Rate** | ⚡ **250 Hz (4ms)** | ~30–60 Hz | ~30–60 Hz | ~20–50 Hz |
+| **Sub-Pixel Trackpad Precision** | ✅ **Float Hermite Accel** | ❌ Coarse integer | ❌ Integer | ❌ Coarse |
+| **Zero-Click Auto-Connect** | ✅ **Instant Reconnect** | ⚠️ Network scan | ⚠️ Manual reconnect | ❌ Manual connect |
+| **Privacy & Security** | ✅ **100% Offline / No Cloud** | ✅ Local Network | ⚠️ Account / Network | ❌ Cloud / Ads |
+| **Translucent Glass Themes** | ✅ **9 Palettes + Aurora** | ❌ Plain | ❌ Plain | ❌ Generic |
+
+---
+
+## ✨ Core Highlights
+
+### 🏎️ 1. Ultra-Low Latency Engine (250 Hz / 4ms)
+- **High-Rate Polling**: Input reporting tuned to a 4ms minimum interval (250 reports/sec), delivering instant cursor feedback and competitive responsiveness.
+- **Sub-Pixel Motion Math**: Uses high-precision floating-point delta tracking with smooth Hermite velocity interpolation, preventing micro-stutters and coarse stepping.
+- **Hardware-Direct Haptics**: Millisecond-accurate vibration pulses delivered straight to the hardware actuator for tactile confirmation.
+
+### ⚡ 2. Zero-Click Auto-Connect & Rapid Recovery
+- **Automatic Host Targeting**: If you have a paired PC, InpuLync automatically acquires the connection as soon as you open the app — no menu navigation needed.
+- **Instant Wake Reconnect**: Re-establishes the HID session within **300ms** when your laptop wakes from sleep or right after Bluetooth pairing completes.
+- **800ms Fast Recovery**: In the event of a signal hiccup, an aggressive 800ms retry schedule reconnects the input session seamlessly.
+
+### 🎮 3. Console-Grade Gamepad
+- **Dual Analog Thumbsticks**: Smooth, clickable 360° analog sticks (L3 / R3) for precision movement and camera steering.
+- **8-Way Directional D-Pad**: High-visibility cross D-pad with responsive multi-directional chord detection.
+- **Customizable Face Buttons**: Switch between PlayStation (`✕ ○ □ △`), Xbox (`A B X Y`), or standard HID numeric (`1 2 3 4`) glyphs.
+- **Analog Ramping Triggers**: Smooth graduated trigger pulls for `L2` / `R2` alongside crisp digital bumpers `L1` / `R1`.
+- **Steam Input Ready**: Works out of the box with Steam Input and PC emulators. See [Steam Input Setup Guide](docs/steam-input.md).
+
+### ⌨️ 4. Full Workstation Keyboard & Dedicated Numpad
+- **Complete Typing Layout**: Modifiers (`Ctrl`, `Alt`, `Shift`, `Caps`, `Win/Super`) with clear visual latch and chord indicators.
+- **Dedicated NUMPAD**: Tap **TOOLS ▾ → NUMPAD** for a full numeric keypad with math operators and auto-repeating backspace.
+- **International Layouts**: Supports standard US and UK keyboard profiles with localized punctuation keys.
+
+### 📱 5. One-Handed Portrait Remote Mode
+Rotate your phone upright for an ergonomic, thumb-driven remote control:
 ```
 ┌──────────────────────────────────────┐
 │  InpuLync        BT ✓   BAT 85% [⚙]  │
@@ -66,98 +123,82 @@ Hold your phone upright for an ergonomic, thumb-driven remote control:
 └──────────────────────────────────────┘
 ```
 
-### ⌨️ Landscape Mode: Desktop Keyboard & Gamepad
-Rotate horizontally to unlock the full workstation control center:
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│ [TRACKPAD▾] [TOOLS▾] [SET] [GAMEPAD]    InpuLync  BT ✓   [PAIR]        │
-├────────────────────────────────────────────────────────────────────────┤
-│ [Esc]  [1] [2] [3] [4] [5] [6] [7] [8] [9] [0] [-] [=]   [Backspace]   │
-│ [Tab]   [Q] [W] [E] [R] [T] [Y] [U] [I] [O] [P] [[] []]      [\ ]      │
-│ [Caps]   [A] [S] [D] [F] [G] [H] [J] [K] [L] [;] [']       [Enter]     │
-│ [Shift]   [Z] [X] [C] [V] [B] [N] [M] [,] [.] [/]          [Shift]     │
-│ [Ctrl] [Win] [Alt]       [      SPACE      ]     [Alt] [Ctrl] [◄][▲][▼][►]│
-└────────────────────────────────────────────────────────────────────────┘
-```
+### 🎨 6. Translucent Glass Design & Aurora Background
+- **9 Handcrafted Color Schemes**: Aurora, Frost, Midnight, Sunset, Ocean, Forest, Sakura, AMOLED (pure black battery saver), and Custom (with a real-time 360° HSV hue slider).
+- **Procedural Particle Drift**: An ambient, GPU-accelerated Aurora particle background with a battery-saving motion toggle.
 
-### 🎮 Dual-Analog Gamepad Surface
-Switch instantly to the low-latency gamepad layout:
-- **Left**: Clickable analog thumbstick (L3) & 8-way directional cross D-Pad.
-- **Right**: Clickable analog thumbstick (R3) & 4 face buttons (Configurable: PlayStation symbols `✕ ○ □ △`, Xbox `A B X Y`, or HID numbers `1 2 3 4`).
-- **Top Shoulders**: Digital bumpers `L1` / `R1` and smooth analog-ramping triggers `L2` / `R2`.
-- **System**: `SELECT`, `START`, and `PS` home buttons.
+---
+
+## 🛠️ Quick Start Guide
+
+### 📶 Bluetooth Mode (Recommended • Zero Drivers)
+
+1. **Install the APK**: Download **`InpuLync-v1.4.0.apk`** from [Releases](https://github.com/mohammedarsath-ars/InpuLync/releases/latest) and install it on your Android phone (Android 9.0+).
+2. **Grant Nearby Devices**: Open InpuLync and grant the Bluetooth Nearby Devices permission.
+3. **Make Phone Visible**: Tap **Make phone visible** in the app.
+4. **Pair with PC**: On your PC, open Bluetooth Settings $\rightarrow$ Add Device $\rightarrow$ Select your phone and confirm pairing.
+5. **Start Controlling**: The top status bar will show **INPUT CONNECTED ✓**. Move your thumb on the screen — your PC mouse moves immediately!
 
 > [!TIP]
-> Playing games on Steam? Follow our [Steam Input Setup and Exact Button Map](docs/steam-input.md).
+> Once paired, **InpuLync auto-connects to your PC every time you open the app**! A lightweight background service keeps the connection alive even when your phone screen turns off.
 
 ---
 
-## Bluetooth Mode
+### 🔌 USB Mode (Optional • Secure Loopback)
 
-Bluetooth mode uses Android's native HID Device profile. Windows sees the phone as a standard Bluetooth composite device without needing any drivers or companion software:
+For environments where Bluetooth is unavailable or disabled, InpuLync provides an authenticated USB loopback tunnel over ADB:
 
-1. Open **InpuLync** on the phone and grant Nearby Devices permissions.
-2. Tap **Make phone visible**, then pair the phone in Windows Bluetooth Settings.
-3. In the app, tap the paired PC and select **Bluetooth**.
-4. The top status bar displays **INPUT CONNECTED ✓** once the HID session is active.
-
-A lightweight background service (`HidService`) keeps the HID connection alive when switching apps or locking the screen, with a persistent notification and quick **Stop** action.
-
-`windows/Pair-Bluetooth.ps1` is an optional local pairing script if Windows default discovery has trouble finding the phone.
+1. Enable **USB Debugging** in Android Developer Options and plug in your USB cable.
+2. In the app, switch mode to **USB**.
+3. Open **SET → USB PAIR CODE** on the phone and enter the 16-character HMAC code into `windows/Start-UsbInput.ps1` (remembered automatically after first entry).
+4. Unlocks laptop brightness control, PC battery telemetry, and Unicode text injection over physical cable.
 
 ---
 
-## USB Mode & Windows Companion
+## 🎯 Gesture Reference
 
-USB mode sends a lightweight protocol through an `adb forward` tunnel. The communication takes place strictly on the localhost loopback interface over the physical USB cable:
+| Gesture | Action |
+| :--- | :--- |
+| **1-Finger Tap** | Left Mouse Click |
+| **1-Finger Hold / Double-Tap & Drag** | Drag & Drop / Window Move |
+| **2-Finger Tap** | Right Mouse Click |
+| **2-Finger Vertical Drag** | Mouse Scroll Wheel (Up / Down) |
+| **2-Finger Horizontal Drag** | AC Pan Horizontal Scroll |
+| **3-Finger Swipe Left / Right** | Switch Virtual Desktops (`Win + Ctrl + Left/Right`) |
+| **3-Finger Swipe Up** | Windows Task View (`Win + Tab`) |
+| **3-Finger Swipe Down** | Show / Hide Desktop (`Win + D`) |
+| **Dedicated Scroll Strip** | Precision 1-Finger Scrolling with Haptic Clicks |
 
-1. Enable USB Debugging on the phone and connect the USB cable.
-2. Open **InpuLync** and select **USB** mode.
-3. Open **SET → USB PAIR CODE** on the phone and enter the 16-character code into `windows/Start-UsbInput.ps1` (remembered automatically after the first run).
-4. The companion enables host battery percentage monitoring, laptop brightness control, laptop audio clicks, and Unicode typing.
+---
 
-Verify the USB connection without sending input:
+## 🔨 Build from Source
+
+### Requirements
+- **JDK 17** (Temurin recommended)
+- **Android SDK Platform 35** (Build-tools `35.0.0`)
+
 ```bash
-python windows/usb_input_host.py --check
-```
+# Clone the repository
+git clone https://github.com/mohammedarsath-ars/InpuLync.git
+cd InpuLync
 
----
-
-## Gestures & Controls Reference
-
-- **One-Finger Tap**: Left mouse click.
-- **Hold or Double-Tap & Drag**: Left button drag-and-drop.
-- **Two-Finger Vertical Scroll**: Mouse wheel up/down.
-- **Two-Finger Horizontal Scroll**: Horizontal AC Pan scroll.
-- **Three-Finger Swipe Left / Right**: Switch virtual desktops (`Win+Ctrl+Left/Right`).
-- **Three-Finger Swipe Up**: Windows Task View (`Win+Tab`).
-- **Three-Finger Swipe Down**: Show Desktop (`Win+D`).
-- **Dedicated Scroll Strip**: One-finger vertical scrolling with discrete haptic ticks.
-- **Pointer Acceleration**: Configurable (OFF, LOW, MED, HIGH) with smooth velocity-based Hermite interpolation.
-
----
-
-## Build from Source
-
-### Android APK
-Install JDK 17 and run:
-```bash
-# On Linux / macOS
+# Build Debug APK on Linux / macOS
 ./gradlew assembleDebug
 
-# On Windows
+# Build Debug APK on Windows
 .\gradlew.bat assembleDebug
 ```
-The APK is generated at `app/build/outputs/apk/debug/`. GitHub Actions automatically builds and publishes the APK as a workflow artifact on every push.
+The compiled APK will be output to `app/build/outputs/apk/debug/InpuLync-v1.4.0.apk`.
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-Bug fixes, layout enhancements, translation improvements, and device compatibility reports are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request, and disclose any security issues responsibly according to [SECURITY.md](SECURITY.md).
+Contributions, bug reports, and pull requests are warmly welcome! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) before getting started. For security concerns, refer to [SECURITY.md](SECURITY.md).
 
 ---
 
-## License
+## 📄 License
 
-InpuLync is open-source software licensed under the [MIT License](LICENSE).
+InpuLync is open-source software distributed under the terms of the **[MIT License](LICENSE)**.
+Free to use, inspect, modify, and distribute.

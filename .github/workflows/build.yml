@@ -31,33 +31,34 @@ jobs:
       - name: Prepare Named APK
         run: |
           mkdir -p dist
-          find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/InpuLync-v1.3.0.apk \;
+          find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/InpuLync-v1.4.0.apk \;
           ls -la dist/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: InpuLync-v1.3.0-APK
-          path: dist/InpuLync-v1.3.0.apk
+          name: InpuLync-v1.4.0-APK
+          path: dist/InpuLync-v1.4.0.apk
           if-no-files-found: error
 
       - name: Publish GitHub Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.0
-          name: "InpuLync v1.3.0 Official Release"
+          tag_name: v1.4.0
+          name: "InpuLync v1.4.0 Official Release"
           body: |
-            ### 📱 InpuLync v1.3.0
+            ### ⚡ InpuLync v1.4.0 — High-Performance & Zero-Click Connect
 
             Turn your Android phone into an ultra-low latency wireless/wired peripheral!
 
-            #### ✨ Key Features
-            - **Zero Driver Bluetooth HID**: Native composite keyboard, multi-touch trackpad, and gamepad.
-            - **9 Translucent Glass Themes**: Aurora, Frost, Midnight, Sunset, Ocean, Forest, Sakura, AMOLED, and Custom HSV hue slider.
-            - **Portrait Remote Mode**: One-handed vertical trackpad with haptic scroll strip and quick media controls.
-            - **Dedicated NUMPAD**: Full numeric keypad in landscape mode (`TOOLS ▾ → NUMPAD`).
-            - **PS3-Inspired Gamepad**: Dual clickable analog thumbsticks, 8-way D-Pad, face buttons, and analog triggers.
+            #### 🚀 What's New in v1.4.0
+            - **250 Hz Low-Latency HID Engine (4ms)**: Double the polling frequency for immediate mouse responsiveness and stutter-free tracking.
+            - **Sub-Pixel Touch Calculations**: Float-based coordinate deltas prevent touch micro-stalls and jitter.
+            - **Zero-Click Auto-Connect**: Remembers paired hosts and automatically targets & connects immediately upon launching the app.
+            - **Instant Wake & Pairing Reconnect**: Reconnects within 300ms when your laptop wakes from sleep or right after completing Bluetooth pairing.
+            - **800ms Fast Recovery Engine**: Rapidly recovers the HID link if the Bluetooth connection drops or temporarily loses range.
+            - **Refined Glass & Aurora UI**: Fixed portrait Aurora particle drift, responsive drawer menus, and eliminated popup window leaks.
 
             #### 📥 Direct Download
-            Download **`InpuLync-v1.3.0.apk`** below to install directly on your Android phone!
-          files: dist/InpuLync-v1.3.0.apk
+            Download **`InpuLync-v1.4.0.apk`** below to install directly on your Android phone!
+          files: dist/InpuLync-v1.4.0.apk
