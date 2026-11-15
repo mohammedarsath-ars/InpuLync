@@ -25,8 +25,15 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Prepare Named APK
+        run: |
+          mkdir -p dist
+          find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/InpuLync.apk \;
+          find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/InpuLync-v1.3.0.apk \;
+          ls -la dist/
+
       - uses: actions/upload-artifact@v4
         with:
-          name: InpuLync-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: InpuLync-v1.3.0-APK
+          path: dist/*.apk
           if-no-files-found: error

@@ -13,4 +13,10 @@ android {
         versionCode 4
         versionName '1.3.0'
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "InpuLync-v${variant.versionName}.apk"
+        }
+    }
 }
