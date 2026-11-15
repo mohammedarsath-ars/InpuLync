@@ -2,7 +2,7 @@ package com.inpulync.app;
 
 import android.graphics.Color;
 
-/** App-wide palette. Glass themes are translucent; "Neo Classic" is the original look. */
+/** App-wide palette. Translucent glass themes with customizable dynamic hue. */
 final class Theme {
     final String name;
     final boolean glass;
@@ -29,7 +29,6 @@ final class Theme {
                 "#3B1D2E", "#BBF7D0", "#FDE68A", "#FDA4AF", "#C4B5FD"),
         glassDark("AMOLED", "#000000", "#000000", "#FFFFFF", "#9CA3AF", "#6B7280",
                 "#FFFFFF", "#86EFAC", "#FDE68A", "#FCA5A5", "#93C5FD"),
-        neo(),
         custom(210, true)
     };
 
@@ -142,20 +141,6 @@ final class Theme {
         float wrapped = ((hue % 360f) + 360f) % 360f;
         int color = Color.HSVToColor(new float[]{wrapped, saturation, value});
         return String.format("#%06X", color & 0xFFFFFF);
-    }
-
-    private static Theme neo() {
-        int ink = Color.rgb(24, 24, 24);
-        int paper = Color.rgb(247, 243, 234);
-        int green = Color.rgb(139, 214, 170);
-        int yellow = Color.rgb(250, 204, 80);
-        int coral = Color.rgb(255, 126, 103);
-        int blue = Color.rgb(139, 188, 255);
-        return new Theme("Neo Classic", false, false,
-                paper, paper, green, yellow, coral,
-                ink, paper, green, yellow, coral, blue, Color.rgb(104, 157, 222),
-                ink, Color.rgb(45, 45, 45), Color.rgb(72, 72, 72), paper,
-                ink, paper, ink, ink);
     }
 
     static int mix(int from, int to, float amount) {

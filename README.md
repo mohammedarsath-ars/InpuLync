@@ -28,41 +28,58 @@
 - **One-Handed Portrait Trackpad Remote**: Hold the phone upright for a full-screen vertical trackpad with haptic scroll strip, left/right click buttons, and quick media controls. Rotate horizontally into landscape for the full desktop keyboard or gamepad.
 - **Dedicated NUMPAD**: Open **TOOLS ▾ → NUMPAD** for a dedicated numeric keypad (0–9, arithmetic operators `+`, `−`, `×`, `/`, `Enter`, and repeating `Backspace`).
 - **Media Controls**: Integrated media buttons (Play/Pause, Next Track, Previous Track, Volume Up/Down, and Mute) over Bluetooth Consumer Control and USB.
-- **10 Switchable Themes**: Liquid-glass and neobrutalist palettes (Aurora, Frost, Midnight, Sunset, Ocean, Forest, Sakura, AMOLED, Neo Classic, and Custom with a 360° HSV hue slider). Procedural animated drifting Aurora background with a battery-saving motion toggle.
+- **9 Translucent Glass Themes**: Translucent glass palettes (Aurora, Frost, Midnight, Sunset, Ocean, Forest, Sakura, AMOLED, and Custom with a 360° HSV hue slider). Procedural animated drifting Aurora background with a battery-saving motion toggle.
 - **Direct Hardware Haptics**: Calibrated millisecond vibration pulses directly controlling the hardware vibrator, ensuring tactile feedback even when global system touch-feedback is disabled.
 - **Hardened USB Bridge**: Optional companion tool over ADB loopback (`127.0.0.1:27183`) featuring mutual HMAC-SHA256 challenge-response authentication. Provides host battery telemetry, laptop panel brightness adjustment via WMI, and Unicode text injection.
 
 ---
 
-## Visual Tour
+## Control Modes & Interface
 
-<p align="center">
-  <img src="docs/images/keyboard.png" alt="Full InpuLync keyboard" width="100%">
-</p>
+InpuLync adapts seamlessly to how you hold your phone:
 
-| Wide Trackpad & Scroll Strip | Compact Tools Drawer |
-| :---: | :---: |
-| <img src="docs/images/trackpad.png" alt="InpuLync trackpad" width="100%"> | <img src="docs/images/tools-drawer.png" alt="InpuLync tools drawer" width="100%"> |
+### 📱 Portrait Mode: One-Handed Remote
+Hold your phone upright for an ergonomic, thumb-driven remote control:
+```
+┌──────────────────────────────────────┐
+│  InpuLync        BT ✓   BAT 85% [⚙]  │
+├──────────────────────────────────────┤
+│                                      │
+│                                      │
+│          FULL-SURFACE TRACKPAD       │  [▲]
+│        • 1-Finger Tap: Click         │  [█] SCROLL
+│        • 2-Finger Drag: Scroll       │  [█] STRIP
+│        • 3-Finger Swipe: Desktops    │  [▼]
+│                                      │
+│                                      │
+├──────────────────┬───────────────────┤
+│    LEFT CLICK    │    RIGHT CLICK    │
+├──────────────────┴───────────────────┤
+│     [⏮ PREV]   [⏯ PLAY]   [⏭ NEXT]   │
+│         [VOL −]       [VOL +]        │
+└──────────────────────────────────────┘
+```
 
-| Function & Navigation Keys | Volume, Brightness & Battery |
-| :---: | :---: |
-| <img src="docs/images/function-keys.png" alt="Function key drawer" width="100%"> | <img src="docs/images/system-controls.png" alt="System controls" width="100%"> |
+### ⌨️ Landscape Mode: Desktop Keyboard & Gamepad
+Rotate horizontally to unlock the full workstation control center:
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ [TRACKPAD▾] [TOOLS▾] [SET] [GAMEPAD]    InpuLync  BT ✓   [PAIR]        │
+├────────────────────────────────────────────────────────────────────────┤
+│ [Esc]  [1] [2] [3] [4] [5] [6] [7] [8] [9] [0] [-] [=]   [Backspace]   │
+│ [Tab]   [Q] [W] [E] [R] [T] [Y] [U] [I] [O] [P] [[] []]      [\ ]      │
+│ [Caps]   [A] [S] [D] [F] [G] [H] [J] [K] [L] [;] [']       [Enter]     │
+│ [Shift]   [Z] [X] [C] [V] [B] [N] [M] [,] [.] [/]          [Shift]     │
+│ [Ctrl] [Win] [Alt]       [      SPACE      ]     [Alt] [Ctrl] [◄][▲][▼][►]│
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-| Input Tuning | Controller Settings |
-| :---: | :---: |
-| <img src="docs/images/settings.png" alt="InpuLync input settings" width="100%"> | <img src="docs/images/settings-controller.png" alt="InpuLync controller settings" width="100%"> |
-
----
-
-## Gamepad & Controller Layouts
-
-| PlayStation Symbols | Xbox-Style ABXY | HID Numbers 1–4 |
-| :---: | :---: | :---: |
-| <img src="docs/images/controller-default.png" alt="PlayStation controller labels" width="100%"> | <img src="docs/images/controller-abxy.png" alt="Xbox-style controller labels" width="100%"> | <img src="docs/images/controller-1234.png" alt="Numbered controller labels" width="100%"> |
-
-| Live Stick Position | Active Diagonal D-Pad | Swapped Pad / Sticks |
-| :---: | :---: | :---: |
-| <img src="docs/images/controller-input-live.png" alt="Left stick moving visibly" width="100%"> | <img src="docs/images/controller-dpad-active.png" alt="D-pad diagonal arms highlighted" width="100%"> | <img src="docs/images/controller-swapped.png" alt="Swapped controller layout" width="100%"> |
+### 🎮 Dual-Analog Gamepad Surface
+Switch instantly to the low-latency gamepad layout:
+- **Left**: Clickable analog thumbstick (L3) & 8-way directional cross D-Pad.
+- **Right**: Clickable analog thumbstick (R3) & 4 face buttons (Configurable: PlayStation symbols `✕ ○ □ △`, Xbox `A B X Y`, or HID numbers `1 2 3 4`).
+- **Top Shoulders**: Digital bumpers `L1` / `R1` and smooth analog-ramping triggers `L2` / `R2`.
+- **System**: `SELECT`, `START`, and `PS` home buttons.
 
 > [!TIP]
 > Playing games on Steam? Follow our [Steam Input Setup and Exact Button Map](docs/steam-input.md).
