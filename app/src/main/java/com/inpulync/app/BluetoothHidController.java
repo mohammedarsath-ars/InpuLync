@@ -283,11 +283,16 @@ final class BluetoothHidController {
         if (!hasPermission() || adapter == null) return Collections.emptyList();
         List<BluetoothDevice> computers = new ArrayList<>();
         List<BluetoothDevice> everything = new ArrayList<>();
-        for (BluetoothDevice device : adapter.getBondedDevices()) {
-            everything.add(device);
-            BluetoothClass type = device.getBluetoothClass();
-            if (type != null && type.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER)
-                computers.add(device);
+        try {
+            for (BluetoothDevice device : adapter.getBondedDevices()) {
+                everything.add(device);
+                BluetoothClass type = device.getBluetoothClass();
+                if (type != null && type.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER)
+                    computers.add(device);
+            }
+        } catch (SecurityException e) {
+            Log.w(TAG, "SecurityException reading bonded devices", e);
+            return Collections.emptyList();
         }
         List<BluetoothDevice> pick = computers.isEmpty() ? everything : computers;
         Collections.sort(pick, (a, b) -> safeName(a).compareToIgnoreCase(safeName(b)));
@@ -383,7 +388,11 @@ final class BluetoothHidController {
 
     String safeName(BluetoothDevice device) {
         if (device == null || !hasPermission()) return "paired host";
-        String name = device.getName();
+        String name = null;
+        try {
+            name = device.getName();
+        } catch (SecurityException ignored) {
+        }
         return name == null ? device.getAddress() : name;
     }
 

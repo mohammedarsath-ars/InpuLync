@@ -89,6 +89,9 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
     private PopupWindow toolsPopup;
     private PopupWindow systemPopup;
     private PopupWindow settingsPopup;
+    private PopupWindow functionPopup;
+    private PopupWindow numpadPopup;
+    private PopupWindow bluetoothPopup;
     private final Map<String, TextView> settingValueViews = new HashMap<>();
     private int dragHoldMs = 500;
     private int pointerPercent = 100;
@@ -169,10 +172,7 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         splash.setFocusable(true);
 
         ImageView logo = new ImageView(this);
-        int resId = getResources().getIdentifier("inpulync_logo", "drawable", getPackageName());
-        if (resId != 0) {
-            logo.setImageResource(resId);
-        }
+        logo.setImageResource(R.drawable.inpulync_logo);
         int logoSize = dp(170);
         LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(logoSize, logoSize);
         logoParams.bottomMargin = dp(14);
@@ -238,19 +238,28 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         // With the background service running the link stays alive off-screen.
         if (!HidService.isRunning()) bluetooth.setForeground(false);
         if (aurora != null) aurora.setRunning(false);
+        dismissAllPopups();
         super.onPause();
     }
 
     @Override
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        if (trackpadPopup != null) trackpadPopup.dismiss();
-        if (toolsPopup != null) toolsPopup.dismiss();
-        if (systemPopup != null) systemPopup.dismiss();
-        if (settingsPopup != null) settingsPopup.dismiss();
+        dismissAllPopups();
         setContentView(buildUi());
         applySystemBars();
         updateStatus();
+    }
+
+    private void dismissAllPopups() {
+        if (trackpadPopup != null) { try { trackpadPopup.dismiss(); } catch (Exception ignored) {} trackpadPopup = null; }
+        if (toolsPopup != null) { try { toolsPopup.dismiss(); } catch (Exception ignored) {} toolsPopup = null; }
+        if (systemPopup != null) { try { systemPopup.dismiss(); } catch (Exception ignored) {} systemPopup = null; }
+        if (settingsPopup != null) { try { settingsPopup.dismiss(); } catch (Exception ignored) {} settingsPopup = null; }
+        if (functionPopup != null) { try { functionPopup.dismiss(); } catch (Exception ignored) {} functionPopup = null; }
+        if (numpadPopup != null) { try { numpadPopup.dismiss(); } catch (Exception ignored) {} numpadPopup = null; }
+        if (bluetoothPopup != null) { try { bluetoothPopup.dismiss(); } catch (Exception ignored) {} bluetoothPopup = null; }
+        if (macroPanel != null) { try { macroPanel.dismiss(); } catch (Exception ignored) {} }
     }
 
     private void setMode(int nextMode) {
@@ -363,6 +372,7 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         FrameLayout container = new FrameLayout(this);
         aurora = new AuroraView(this);
         aurora.setAnimated(auroraAnimated);
+        aurora.setRunning(true);
         container.addView(aurora, new FrameLayout.LayoutParams(-1, -1));
         container.addView(root, new FrameLayout.LayoutParams(-1, -1));
         return container;
@@ -541,7 +551,8 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         controllerPanel = null;
         inputContainer.removeAllViews();
         if (useController) {
-            bluetoothModeButton.setChecked(true);
+            setMode(MODE_BLUETOOTH);
+            if (bluetoothModeButton != null) bluetoothModeButton.setChecked(true);
             controllerPanel = new ControllerPanel(this, neoUi, feedback,
                     this::sendGamepadReport, swapGamepadControls, gamepadLabelStyle);
             inputContainer.addView(controllerPanel.build(),
@@ -894,7 +905,8 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
                         Toast.LENGTH_LONG).show();
                 return;
             }
-            bluetoothModeButton.setChecked(true);
+            setMode(MODE_BLUETOOTH);
+            if (bluetoothModeButton != null) bluetoothModeButton.setChecked(true);
             Toast.makeText(this, "Switching to " + bluetooth.safeName(next) + "…",
                     Toast.LENGTH_SHORT).show();
             bluetooth.switchTo(next);
@@ -1034,7 +1046,8 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         }
         if (mode == MODE_USB) return;
         if (mode != MODE_BLUETOOTH) {
-            bluetoothModeButton.setChecked(true);
+            setMode(MODE_BLUETOOTH);
+            if (bluetoothModeButton != null) bluetoothModeButton.setChecked(true);
         }
         if (bluetooth.isInputLive()) {
             Toast.makeText(this, "Already connected ✓", Toast.LENGTH_SHORT).show();
@@ -1147,11 +1160,13 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         card.addView(navigation, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(58)));
 
-        PopupWindow popup = new PopupWindow(card, dp(750), dp(132), true);
-        popup.setBackgroundDrawable(rounded(Color.TRANSPARENT));
-        popup.setOutsideTouchable(true);
-        popup.setElevation(dp(12));
-        popup.showAsDropDown(anchor, 0, dp(4));
+        int maxPopupWidth = Math.min(dp(750), getResources().getDisplayMetrics().widthPixels - dp(16));
+        functionPopup = new PopupWindow(card, maxPopupWidth, dp(132), true);
+        functionPopup.setBackgroundDrawable(rounded(Color.TRANSPARENT));
+        functionPopup.setOutsideTouchable(true);
+        functionPopup.setElevation(dp(12));
+        functionPopup.setOnDismissListener(() -> functionPopup = null);
+        functionPopup.showAsDropDown(anchor, 0, dp(4));
     }
 
     private void showNumpadPopup(View anchor) {
@@ -1199,11 +1214,12 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         addSpecialKey(r5, "=", "ENTER", 0x28, 1f, Theme.current.yellow);
         card.addView(r5, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(54)));
 
-        PopupWindow popup = new PopupWindow(card, dp(280), dp(286), true);
-        popup.setBackgroundDrawable(rounded(Color.TRANSPARENT));
-        popup.setOutsideTouchable(true);
-        popup.setElevation(dp(12));
-        popup.showAsDropDown(anchor, 0, dp(4));
+        numpadPopup = new PopupWindow(card, dp(280), dp(286), true);
+        numpadPopup.setBackgroundDrawable(rounded(Color.TRANSPARENT));
+        numpadPopup.setOutsideTouchable(true);
+        numpadPopup.setElevation(dp(12));
+        numpadPopup.setOnDismissListener(() -> numpadPopup = null);
+        numpadPopup.showAsDropDown(anchor, 0, dp(4));
     }
 
     private void showBluetoothPopup(View anchor) {
@@ -1222,10 +1238,16 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
 
         Button visible = neoButton("MAKE PHONE VISIBLE", Theme.current.yellow);
         visible.setOnClickListener(v -> {
-            bluetoothModeButton.setChecked(true);
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-            startActivity(intent);
+            setMode(MODE_BLUETOOTH);
+            if (bluetoothModeButton != null) bluetoothModeButton.setChecked(true);
+            try {
+                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+                intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+                startActivity(intent);
+            } catch (Exception e) {
+                Log.w("InpuLync", "Discoverable request failed", e);
+                Toast.makeText(this, "Enable Bluetooth Discoverability in Settings", Toast.LENGTH_SHORT).show();
+            }
         });
         card.addView(visible, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(52)));
@@ -1240,28 +1262,30 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         card.addView(pairedDevices);
         refreshBondedDevices();
 
-        PopupWindow popup = new PopupWindow(card, dp(360),
+        bluetoothPopup = new PopupWindow(card, dp(360),
                 LinearLayout.LayoutParams.WRAP_CONTENT, true);
-        popup.setBackgroundDrawable(rounded(Color.TRANSPARENT));
-        popup.setOutsideTouchable(true);
-        popup.setElevation(dp(12));
-        popup.setOnDismissListener(() -> {
+        bluetoothPopup.setBackgroundDrawable(rounded(Color.TRANSPARENT));
+        bluetoothPopup.setOutsideTouchable(true);
+        bluetoothPopup.setElevation(dp(12));
+        bluetoothPopup.setOnDismissListener(() -> {
             pairedDevices = null;
             bluetoothStateView = null;
+            bluetoothPopup = null;
         });
-        popup.showAsDropDown(anchor, -dp(275), dp(4));
+        bluetoothPopup.showAsDropDown(anchor, -dp(275), dp(4));
     }
 
     private void requestBluetoothPermission() {
         if (Build.VERSION.SDK_INT >= 31 &&
                 !bluetooth.hasPermission()) {
-            requestPermissions(Build.VERSION.SDK_INT >= 33
-                    ? new String[]{Manifest.permission.BLUETOOTH_CONNECT,
-                            Manifest.permission.BLUETOOTH_SCAN,
-                            Manifest.permission.POST_NOTIFICATIONS}
-                    : new String[]{Manifest.permission.BLUETOOTH_CONNECT,
-                            Manifest.permission.BLUETOOTH_SCAN},
-                    REQUEST_BT);
+            List<String> perms = new ArrayList<>();
+            perms.add(Manifest.permission.BLUETOOTH_CONNECT);
+            perms.add(Manifest.permission.BLUETOOTH_SCAN);
+            perms.add(Manifest.permission.BLUETOOTH_ADVERTISE);
+            if (Build.VERSION.SDK_INT >= 33) {
+                perms.add(Manifest.permission.POST_NOTIFICATIONS);
+            }
+            requestPermissions(perms.toArray(new String[0]), REQUEST_BT);
         } else {
             bluetooth.bind();
         }
@@ -1296,7 +1320,8 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
                     } else {
                         Toast.makeText(this, "Connecting keyboard and mouse…",
                                 Toast.LENGTH_SHORT).show();
-                        bluetoothModeButton.setChecked(true);
+                        setMode(MODE_BLUETOOTH);
+                        if (bluetoothModeButton != null) bluetoothModeButton.setChecked(true);
                         bluetooth.connect(device);
                     }
                     updateStatus();
@@ -1571,6 +1596,7 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
 
     @Override
     protected void onDestroy() {
+        dismissAllPopups();
         super.onDestroy();
         bluetooth.setListener(null);
         bluetooth.cancelTyping();

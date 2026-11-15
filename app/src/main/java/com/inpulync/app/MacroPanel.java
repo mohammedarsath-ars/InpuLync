@@ -35,6 +35,13 @@ final class MacroPanel {
         this.layout = layout;
     }
 
+    void dismiss() {
+        if (popup != null) {
+            popup.dismiss();
+            popup = null;
+        }
+    }
+
     void show(View anchor) {
         if (popup != null) popup.dismiss();
         LinearLayout card = new LinearLayout(activity);
