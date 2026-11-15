@@ -21,6 +21,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
@@ -172,7 +173,10 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         splash.setFocusable(true);
 
         ImageView logo = new ImageView(this);
-        logo.setImageResource(R.drawable.inpulync_logo);
+        int resId = getResources().getIdentifier("inpulync_logo", "drawable", getPackageName());
+        if (resId != 0) {
+            logo.setImageResource(resId);
+        }
         int logoSize = dp(170);
         LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(logoSize, logoSize);
         logoParams.bottomMargin = dp(14);
