@@ -9,8 +9,9 @@
 
 <p align="center">
   <a href="https://github.com/mohammedarsath-ars/InpuLync/releases/latest">
-    <img src="https://img.shields.io/badge/Release-v1.4.0-00E676?style=for-the-badge&logo=github&logoColor=white" alt="Latest Release">
+    <img src="https://img.shields.io/badge/Release-v1.5.0-00E676?style=for-the-badge&logo=github&logoColor=white" alt="Latest Release">
   </a>
+  <img src="https://img.shields.io/badge/Air_Mouse-Gyro_Motion_Remote-FF4081?style=for-the-badge&logo=target&logoColor=white" alt="Air Mouse">
   <img src="https://img.shields.io/badge/HID_Polling-250_Hz_(4ms)-00B0FF?style=for-the-badge&logo=speedtest&logoColor=white" alt="HID Polling Rate">
   <img src="https://img.shields.io/badge/Android-9.0%2B_(API_28%2B)-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android Support">
   <img src="https://img.shields.io/badge/Privacy-100%25_Offline-blueviolet?style=for-the-badge&logo=shield&logoColor=white" alt="Privacy">
@@ -19,7 +20,7 @@
 
 <p align="center">
   <a href="https://github.com/mohammedarsath-ars/InpuLync/releases/latest">
-    <img src="https://img.shields.io/badge/⚡_DOWNLOAD_LATEST_RELEASE-InpuLync_v1.4.0.apk-00E676?style=for-the-badge&logo=android&logoColor=black" alt="Download InpuLync APK" height="52">
+    <img src="https://img.shields.io/badge/⚡_DOWNLOAD_LATEST_RELEASE-InpuLync_v1.5.0.apk-00E676?style=for-the-badge&logo=android&logoColor=black" alt="Download InpuLync APK" height="52">
   </a>
 </p>
 
@@ -66,6 +67,7 @@ graph LR
 
 | Feature | ⚡ InpuLync | KDE Connect | Unified Remote | Generic Remote Apps |
 | :--- | :---: | :---: | :---: | :---: |
+| **Air Mouse / Gyro Remote** | ✅ **Built-in Gyro + Slides** | ❌ (None) | ⚠️ (Paid add-on) | ❌ (None) |
 | **Driverless Bluetooth HID** | ✅ **Native Hardware Mode** | ❌ (Wi-Fi Only) | ❌ (Server Required) | ❌ (Server Required) |
 | **Zero PC Software Needed** | ✅ **None (Zero Install)** | ❌ (Needs PC App) | ❌ (Needs PC App) | ❌ (Needs PC App) |
 | **DirectInput Gamepad** | ✅ **PS3 / Xbox Layout** | ❌ | ⚠️ (Paid add-on) | ⚠️ (Requires drivers) |
@@ -79,7 +81,15 @@ graph LR
 
 ## ✨ Core Highlights
 
-### 🏎️ 1. Ultra-Low Latency Engine (250 Hz / 4ms)
+### 🎯 1. Air Mouse & Presentation Clicker (New in v1.5.0)
+- **Mid-Air Gyro Navigation**: Turn your phone into an LG Magic Remote or presentation clicker. Move your wrist naturally to glide the PC mouse cursor across screens with zero PC software.
+- **Hold-to-Aim Clutch**: Place your thumb on the center holographic reticle to engage aiming; release to freeze cursor position for repositioning or clicking.
+- **World-Space Gravity Projection**: Projects 3D angular velocity onto earth vertical so horizontal sweeps stay horizontal and vertical tilts stay vertical, even when reclining on a bed or sofa.
+- **Anti-Jitter Tremor Filter**: Dynamic adaptive low-pass filter with deadzone cancellation removes natural hand tremors while keeping rapid flicks instantaneous.
+- **Slide Presentation Deck**: Dedicated clicker controls for PowerPoint, Google Slides, Keynote, and PDF viewers (Next Slide, Prev Slide, F5 Start Slideshow, and 'B' Blank Screen).
+- **Couch Media Remote**: Integrated media controls for YouTube, Netflix, and VLC (Play/Pause, Volume, Mute, and Fullscreen toggle).
+
+### 🏎️ 2. Ultra-Low Latency Engine (250 Hz / 4ms)
 - **High-Rate Polling**: Input reporting tuned to a 4ms minimum interval (250 reports/sec), delivering instant cursor feedback and competitive responsiveness.
 - **Sub-Pixel Motion Math**: Uses high-precision floating-point delta tracking with smooth Hermite velocity interpolation, preventing micro-stutters and coarse stepping.
 - **Hardware-Direct Haptics**: Millisecond-accurate vibration pulses delivered straight to the hardware actuator for tactile confirmation.

@@ -31,34 +31,34 @@ jobs:
       - name: Prepare Named APK
         run: |
           mkdir -p dist
-          find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/InpuLync-v1.4.0.apk \;
+          find app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} dist/InpuLync-v1.5.0.apk \;
           ls -la dist/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: InpuLync-v1.4.0-APK
-          path: dist/InpuLync-v1.4.0.apk
+          name: InpuLync-v1.5.0-APK
+          path: dist/InpuLync-v1.5.0.apk
           if-no-files-found: error
 
       - name: Publish GitHub Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.4.0
-          name: "InpuLync v1.4.0 Official Release"
+          tag_name: v1.5.0
+          name: "InpuLync v1.5.0 Official Release"
           body: |
-            ### ⚡ InpuLync v1.4.0 — High-Performance & Zero-Click Connect
+            ### ⚡ InpuLync v1.5.0 — Air Mouse & Presentation Edition
 
-            Turn your Android phone into an ultra-low latency wireless/wired peripheral!
+            Turn your Android phone into an ultra-low latency wireless gyro remote, presentation clicker, and desktop peripheral!
 
-            #### 🚀 What's New in v1.4.0
-            - **250 Hz Low-Latency HID Engine (4ms)**: Double the polling frequency for immediate mouse responsiveness and stutter-free tracking.
-            - **Sub-Pixel Touch Calculations**: Float-based coordinate deltas prevent touch micro-stalls and jitter.
-            - **Zero-Click Auto-Connect**: Remembers paired hosts and automatically targets & connects immediately upon launching the app.
-            - **Instant Wake & Pairing Reconnect**: Reconnects within 300ms when your laptop wakes from sleep or right after completing Bluetooth pairing.
-            - **800ms Fast Recovery Engine**: Rapidly recovers the HID link if the Bluetooth connection drops or temporarily loses range.
-            - **Refined Glass & Aurora UI**: Fixed portrait Aurora particle drift, responsive drawer menus, and eliminated popup window leaks.
+            #### 🎯 What's New in v1.5.0
+            - **🎯 Air Mouse (Gyroscope Motion Control)**: Control your PC cursor in mid-air simply by tilting or pointing your phone with built-in gyroscope sensor.
+            - **🕹️ Hold-to-Aim Clutch & Lock Mode**: Ergonomic touch trigger on the holographic reticle — hold thumb to aim, lift to lock cursor, or toggle Always-On.
+            - **🌊 World-Space Gravity Projection & Anti-Jitter Filter**: Cursor moves straight and true regardless of phone incline, with adaptive low-pass smoothing eliminating natural hand tremors.
+            - **📊 PowerPoint & Google Slides Presenter Deck**: Dedicated remote buttons for Next Slide, Prev Slide, F5 Start Slideshow, and 'B' Blank Screen.
+            - **🍿 Couch Media Remote**: Relax on your couch and control YouTube / Netflix / VLC with Play/Pause, Volume dials, Mute, and Fullscreen toggle.
+            - **📱 Dual Mode Switcher**: Seamlessly switch between touch trackpad and Air Mouse in portrait or landscape orientations.
 
             #### 📥 Direct Download
-            Download **`InpuLync-v1.4.0.apk`** below to install directly on your Android phone!
-          files: dist/InpuLync-v1.4.0.apk
+            Download **`InpuLync-v1.5.0.apk`** below to install directly on your Android phone!
+          files: dist/InpuLync-v1.5.0.apk

@@ -103,6 +103,11 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
     private boolean controllerLayout;
     private boolean swapGamepadControls;
     private int gamepadLabelStyle;
+    private AirMouseController airMouseController;
+    private AirMousePanel airMousePanel;
+    private boolean portraitAirMouse;
+    private boolean landscapeAirMouse;
+    private LinearLayout airMouseTopBar;
     private final List<Button> shiftButtons = new ArrayList<>();
     private final List<Button> capsButtons = new ArrayList<>();
     private final List<Button> ctrlButtons = new ArrayList<>();
@@ -151,6 +156,43 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         feedback.setEnabled(hapticsOn);
         feedback.setLaptopClicksEnabled(laptopClicksOn);
         neoUi = new NeoUi(this, feedback, Theme.current.ink);
+        airMouseController = new AirMouseController(this);
+        airMousePanel = new AirMousePanel(this, neoUi, feedback, airMouseController,
+                new AirMousePanel.Host() {
+                    @Override
+                    public void move(int dx, int dy) {
+                        MainActivity.this.move(dx, dy);
+                    }
+
+                    @Override
+                    public void clickLeft() {
+                        MainActivity.this.clickLeft();
+                    }
+
+                    @Override
+                    public void clickRight() {
+                        MainActivity.this.click("right");
+                    }
+
+                    @Override
+                    public void scroll(int amount) {
+                        MainActivity.this.scroll(amount);
+                    }
+
+                    @Override
+                    public void sendKey(int modifier, int usage) {
+                        if (mode == MODE_USB) {
+                            broadcast("KEY 0x" + Integer.toHexString(usage));
+                        } else if (mode == MODE_BLUETOOTH) {
+                            bluetooth.sendKey(modifier, usage);
+                        }
+                    }
+
+                    @Override
+                    public void sendConsumer(int usage) {
+                        sendBluetoothConsumer(usage);
+                    }
+                });
         View mainUi = buildUi();
         FrameLayout rootFrame = new FrameLayout(this);
         rootFrame.addView(mainUi, new FrameLayout.LayoutParams(-1, -1));
@@ -234,11 +276,18 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         syncModeFromPrefs();
         syncServiceWithMode();
         if (aurora != null) aurora.setRunning(true);
+        if (airMouseController != null) {
+            boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            if ((isPortrait && portraitAirMouse) || (!isPortrait && landscapeAirMouse)) {
+                airMouseController.start();
+            }
+        }
     }
 
     @Override
     protected void onPause() {
         if (controllerPanel != null) controllerPanel.releaseAll();
+        if (airMouseController != null) airMouseController.stop();
         // With the background service running the link stays alive off-screen.
         if (!HidService.isRunning()) bluetooth.setForeground(false);
         if (aurora != null) aurora.setRunning(false);
@@ -250,6 +299,14 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         dismissAllPopups();
+        if (airMouseController != null) {
+            boolean isPortrait = newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            if ((isPortrait && portraitAirMouse) || (!isPortrait && landscapeAirMouse)) {
+                airMouseController.start();
+            } else {
+                airMouseController.stop();
+            }
+        }
         setContentView(buildUi());
         applySystemBars();
         updateStatus();
@@ -322,50 +379,90 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         status.setOnClickListener(v -> quickConnect());
         root.addView(status, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(28)));
 
-        LinearLayout surfaces = new LinearLayout(this);
-        surfaces.setOrientation(LinearLayout.HORIZONTAL);
-        surfaces.setPadding(0, dp(6), 0, dp(6));
+        LinearLayout modeTabs = new LinearLayout(this);
+        modeTabs.setOrientation(LinearLayout.HORIZONTAL);
+        modeTabs.setPadding(0, dp(2), 0, dp(4));
 
-        TextView trackpad = text("TRACKPAD\n\nTap to click · Hold / double-tap to drag\n2 fingers to scroll · 3 fingers to swipe", 14);
-        trackpad.setTypeface(Typeface.DEFAULT_BOLD);
-        trackpad.setGravity(Gravity.CENTER);
-        trackpad.setTextColor(Theme.current.onSurface);
-        trackpad.setBackground(rounded(Theme.current.surface));
-        trackpad.setOnTouchListener(new TrackpadGestureListener(uiHandler, this));
-        surfaces.addView(trackpad, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        Button trackpadTab = neoButton("📱 TRACKPAD", !portraitAirMouse ? Theme.current.blue : Theme.current.paper);
+        trackpadTab.setOnClickListener(v -> {
+            if (portraitAirMouse) {
+                portraitAirMouse = false;
+                saveSettings();
+                if (airMouseController != null) airMouseController.stop();
+                setContentView(buildUi());
+            }
+        });
 
-        TextView scrollPad = text("▲\n\nS\nC\nR\nO\nL\nL\n\n▼", 11);
-        scrollPad.setTypeface(Typeface.DEFAULT_BOLD);
-        scrollPad.setGravity(Gravity.CENTER);
-        scrollPad.setTextColor(Theme.current.ink);
-        scrollPad.setBackground(rounded(Theme.current.blue));
-        scrollPad.setOnTouchListener(new ScrollPadListener(this));
-        LinearLayout.LayoutParams scrollPadParams = new LinearLayout.LayoutParams(dp(54), LinearLayout.LayoutParams.MATCH_PARENT);
-        scrollPadParams.setMargins(dp(6), 0, 0, 0);
-        surfaces.addView(scrollPad, scrollPadParams);
+        Button airMouseTab = neoButton("🎯 AIR MOUSE", portraitAirMouse ? Theme.current.yellow : Theme.current.paper);
+        airMouseTab.setOnClickListener(v -> {
+            if (!portraitAirMouse) {
+                if (airMouseController != null && !airMouseController.hasGyroscope()) {
+                    Toast.makeText(this, "Device has no gyroscope sensor", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                portraitAirMouse = true;
+                saveSettings();
+                if (airMouseController != null) airMouseController.start();
+                setContentView(buildUi());
+            }
+        });
 
-        root.addView(surfaces, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        modeTabs.addView(trackpadTab, weighted());
+        LinearLayout.LayoutParams airParams = weighted();
+        airParams.setMargins(dp(6), 0, 0, 0);
+        modeTabs.addView(airMouseTab, airParams);
+        root.addView(modeTabs, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42)));
 
-        LinearLayout clicks = new LinearLayout(this);
-        clicks.setOrientation(LinearLayout.HORIZONTAL);
-        Button left = neoButton("LEFT CLICK", Theme.current.yellow);
-        left.setOnClickListener(v -> click("left"));
-        Button right = neoButton("RIGHT CLICK", Theme.current.coral);
-        right.setOnClickListener(v -> click("right"));
-        clicks.addView(left, weighted());
-        clicks.addView(right, weighted());
-        root.addView(clicks, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(54)));
+        if (portraitAirMouse) {
+            if (airMouseController != null) airMouseController.start();
+            root.addView(airMousePanel.build(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        } else {
+            if (airMouseController != null) airMouseController.stop();
+            LinearLayout surfaces = new LinearLayout(this);
+            surfaces.setOrientation(LinearLayout.HORIZONTAL);
+            surfaces.setPadding(0, dp(6), 0, dp(6));
 
-        LinearLayout mediaBar = new LinearLayout(this);
-        mediaBar.setOrientation(LinearLayout.HORIZONTAL);
-        mediaBar.setPadding(0, dp(4), 0, 0);
-        addSystemKey(mediaBar, "⏮", "MEDIA_PREV", 0xB6, Theme.current.paper);
-        addSystemKey(mediaBar, "⏯", "MEDIA_PLAY_PAUSE", 0xCD, Theme.current.yellow);
-        addSystemKey(mediaBar, "⏭", "MEDIA_NEXT", 0xB5, Theme.current.paper);
-        addSystemKey(mediaBar, "VOL −", "VOLUME_DOWN", 0xEA, Theme.current.coral);
-        addSystemKey(mediaBar, "MUTE", "VOLUME_MUTE", 0xE2, Theme.current.yellow);
-        addSystemKey(mediaBar, "VOL +", "VOLUME_UP", 0xE9, Theme.current.green);
-        root.addView(mediaBar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(50)));
+            TextView trackpad = text("TRACKPAD\n\nTap to click · Hold / double-tap to drag\n2 fingers to scroll · 3 fingers to swipe", 14);
+            trackpad.setTypeface(Typeface.DEFAULT_BOLD);
+            trackpad.setGravity(Gravity.CENTER);
+            trackpad.setTextColor(Theme.current.onSurface);
+            trackpad.setBackground(rounded(Theme.current.surface));
+            trackpad.setOnTouchListener(new TrackpadGestureListener(uiHandler, this));
+            surfaces.addView(trackpad, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1));
+
+            TextView scrollPad = text("▲\n\nS\nC\nR\nO\nL\nL\n\n▼", 11);
+            scrollPad.setTypeface(Typeface.DEFAULT_BOLD);
+            scrollPad.setGravity(Gravity.CENTER);
+            scrollPad.setTextColor(Theme.current.ink);
+            scrollPad.setBackground(rounded(Theme.current.blue));
+            scrollPad.setOnTouchListener(new ScrollPadListener(this));
+            LinearLayout.LayoutParams scrollPadParams = new LinearLayout.LayoutParams(dp(54), LinearLayout.LayoutParams.MATCH_PARENT);
+            scrollPadParams.setMargins(dp(6), 0, 0, 0);
+            surfaces.addView(scrollPad, scrollPadParams);
+
+            root.addView(surfaces, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+
+            LinearLayout clicks = new LinearLayout(this);
+            clicks.setOrientation(LinearLayout.HORIZONTAL);
+            Button left = neoButton("LEFT CLICK", Theme.current.yellow);
+            left.setOnClickListener(v -> click("left"));
+            Button right = neoButton("RIGHT CLICK", Theme.current.coral);
+            right.setOnClickListener(v -> click("right"));
+            clicks.addView(left, weighted());
+            clicks.addView(right, weighted());
+            root.addView(clicks, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(54)));
+
+            LinearLayout mediaBar = new LinearLayout(this);
+            mediaBar.setOrientation(LinearLayout.HORIZONTAL);
+            mediaBar.setPadding(0, dp(4), 0, 0);
+            addSystemKey(mediaBar, "⏮", "MEDIA_PREV", 0xB6, Theme.current.paper);
+            addSystemKey(mediaBar, "⏯", "MEDIA_PLAY_PAUSE", 0xCD, Theme.current.yellow);
+            addSystemKey(mediaBar, "⏭", "MEDIA_NEXT", 0xB5, Theme.current.paper);
+            addSystemKey(mediaBar, "VOL −", "VOLUME_DOWN", 0xEA, Theme.current.coral);
+            addSystemKey(mediaBar, "MUTE", "VOLUME_MUTE", 0xE2, Theme.current.yellow);
+            addSystemKey(mediaBar, "VOL +", "VOLUME_UP", 0xE9, Theme.current.green);
+            root.addView(mediaBar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(50)));
+        }
 
         TextView hint = text("Rotate landscape for full Keyboard & Gamepad ↷", 11);
         hint.setTextColor(Theme.current.ink);
@@ -412,6 +509,10 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         layoutSwitch = neoButton("GAMEPAD", Theme.current.blue);
         layoutSwitch.setOnClickListener(v -> showInputLayout(true, true));
         top.addView(layoutSwitch, new LinearLayout.LayoutParams(dp(78), dp(54)));
+
+        Button airMouseSwitch = neoButton("AIR 🎯", Theme.current.yellow);
+        airMouseSwitch.setOnClickListener(v -> showAirMouseLandscapeLayout(true));
+        top.addView(airMouseSwitch, new LinearLayout.LayoutParams(dp(72), dp(54)));
 
         TextView title = text("InpuLync", 18);
         title.setTypeface(Typeface.DEFAULT_BOLD);
@@ -474,12 +575,39 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         root.addView(controllerTopBar, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(54)));
 
+        airMouseTopBar = new LinearLayout(this);
+        airMouseTopBar.setGravity(Gravity.CENTER);
+        airMouseTopBar.setOrientation(LinearLayout.HORIZONTAL);
+        Button backKeys = neoButton("⌨ KEYS", Theme.current.blue);
+        backKeys.setOnClickListener(v -> showInputLayout(false, true));
+        airMouseTopBar.addView(backKeys, new LinearLayout.LayoutParams(dp(110), dp(46)));
+
+        Button backPad = neoButton("🎮 GAMEPAD", Theme.current.coral);
+        backPad.setOnClickListener(v -> showInputLayout(true, true));
+        LinearLayout.LayoutParams padParams = new LinearLayout.LayoutParams(dp(120), dp(46));
+        padParams.setMargins(dp(8), 0, 0, 0);
+        airMouseTopBar.addView(backPad, padParams);
+
+        TextView airTitle = text("InpuLync Air Mouse & Presenter", 15);
+        airTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        airTitle.setTextColor(Theme.current.ink);
+        airTitle.setGravity(Gravity.CENTER);
+        airMouseTopBar.addView(airTitle, new LinearLayout.LayoutParams(0, dp(46), 1));
+
+        root.addView(airMouseTopBar, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(54)));
+        airMouseTopBar.setVisibility(landscapeAirMouse ? View.VISIBLE : View.GONE);
+
         inputContainer = new LinearLayout(this);
         inputContainer.setOrientation(LinearLayout.VERTICAL);
         inputContainer.setMotionEventSplittingEnabled(true);
         root.addView(inputContainer, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        showInputLayout(controllerLayout, false);
+        if (landscapeAirMouse) {
+            showAirMouseLandscapeLayout(false);
+        } else {
+            showInputLayout(controllerLayout, false);
+        }
 
         aurora = new AuroraView(this);
         aurora.setAnimated(auroraAnimated);
@@ -543,6 +671,9 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
     }
 
     private void showInputLayout(boolean useController, boolean announce) {
+        landscapeAirMouse = false;
+        if (airMouseController != null) airMouseController.stop();
+        if (airMouseTopBar != null) airMouseTopBar.setVisibility(View.GONE);
         controllerLayout = useController;
         saveSettings();
         if (normalTopBar != null)
@@ -569,6 +700,28 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
             if (announce) Toast.makeText(this,
                     "Keyboard layout", Toast.LENGTH_SHORT).show();
         }
+        updateStatus();
+    }
+
+    private void showAirMouseLandscapeLayout(boolean announce) {
+        if (airMouseController != null && !airMouseController.hasGyroscope()) {
+            Toast.makeText(this, "Device has no gyroscope sensor", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        landscapeAirMouse = true;
+        controllerLayout = false;
+        saveSettings();
+        if (normalTopBar != null) normalTopBar.setVisibility(View.GONE);
+        if (controllerTopBar != null) controllerTopBar.setVisibility(View.GONE);
+        if (airMouseTopBar != null) airMouseTopBar.setVisibility(View.VISIBLE);
+        if (inputContainer == null) return;
+
+        if (controllerPanel != null) controllerPanel.releaseAll();
+        controllerPanel = null;
+        inputContainer.removeAllViews();
+        inputContainer.addView(airMousePanel.build(), new LinearLayout.LayoutParams(-1, -1));
+        if (airMouseController != null) airMouseController.start();
+        if (announce) Toast.makeText(this, "Air Mouse layout", Toast.LENGTH_SHORT).show();
         updateStatus();
     }
 
@@ -751,6 +904,25 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         });
         card.addView(shortcutsButton, new LinearLayout.LayoutParams(dp(190), dp(52)));
 
+        Button airBtn = neoButton("🎯 AIR MOUSE", Theme.current.blue);
+        airBtn.setOnClickListener(v -> {
+            toolsPopup.dismiss();
+            boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            if (isPortrait) {
+                if (airMouseController != null && !airMouseController.hasGyroscope()) {
+                    Toast.makeText(this, "Device has no gyroscope sensor", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                portraitAirMouse = true;
+                saveSettings();
+                if (airMouseController != null) airMouseController.start();
+                setContentView(buildUi());
+            } else {
+                showAirMouseLandscapeLayout(true);
+            }
+        });
+        card.addView(airBtn, new LinearLayout.LayoutParams(dp(190), dp(52)));
+
         Button pasteButton = neoButton("PASTE TEXT", Theme.current.yellow);
         pasteButton.setOnClickListener(v -> {
             toolsPopup.dismiss();
@@ -786,6 +958,8 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
         auroraAnimated = values.getBoolean("aurora_animated", true);
         hostLayout = values.getInt("host_layout", KeyStroke.LAYOUT_US);
         accelLevel = values.getInt("accel_level", PointerAcceleration.MEDIUM);
+        portraitAirMouse = values.getBoolean("portrait_air_mouse", false);
+        landscapeAirMouse = values.getBoolean("landscape_air_mouse", false);
     }
 
     private void saveSettings() {
@@ -802,6 +976,8 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
                 .putBoolean("aurora_animated", auroraAnimated)
                 .putInt("host_layout", hostLayout)
                 .putInt("accel_level", accelLevel)
+                .putBoolean("portrait_air_mouse", portraitAirMouse)
+                .putBoolean("landscape_air_mouse", landscapeAirMouse)
                 .apply();
     }
 
@@ -1601,6 +1777,7 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
     @Override
     protected void onDestroy() {
         dismissAllPopups();
+        if (airMouseController != null) airMouseController.stop();
         super.onDestroy();
         bluetooth.setListener(null);
         bluetooth.cancelTyping();
