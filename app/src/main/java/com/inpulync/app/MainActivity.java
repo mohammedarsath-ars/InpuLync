@@ -175,6 +175,11 @@ public class MainActivity extends Activity implements TrackpadGestureListener.Ho
                     }
 
                     @Override
+                    public void setMouseButton(String which, boolean down) {
+                        MainActivity.this.setMouseButton(which, down);
+                    }
+
+                    @Override
                     public void scroll(int amount) {
                         MainActivity.this.scroll(amount);
                     }

@@ -6,7 +6,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.util.Log;
+import android.view.Surface;
+import android.view.WindowManager;
 
 /**
  * Manages phone gyroscope and accelerometer sensors to compute smooth,
@@ -222,20 +225,39 @@ final class AirMouseController implements SensorEventListener {
             // Turning wrist left/right rotates around earth gravity regardless of phone incline.
             float worldYaw = (wx * gx + wy * gy + wz * gz);
 
-            // World Pitch: rotation around horizontal axis orthogonal to gravity.
-            // In standard handheld orientation, this is predominantly wx.
-            float worldPitch = wx;
+            // Remap pitch and yaw based on active display orientation
+            int rotation = getDisplayRotation();
+            float screenPitch;
+            float screenYaw;
+
+            if (rotation == Surface.ROTATION_90) {
+                // Landscape (rotated 90° counter-clockwise)
+                screenPitch = -wy;
+                screenYaw = worldYaw;
+            } else if (rotation == Surface.ROTATION_270) {
+                // Reverse Landscape (rotated 270°)
+                screenPitch = wy;
+                screenYaw = -worldYaw;
+            } else if (rotation == Surface.ROTATION_180) {
+                // Reverse Portrait
+                screenPitch = -wx;
+                screenYaw = -worldYaw;
+            } else {
+                // Portrait (ROTATION_0)
+                screenPitch = wx;
+                screenYaw = worldYaw;
+            }
 
             // Hand tremor deadzone
-            if (Math.abs(worldYaw) < deadzone) worldYaw = 0f;
-            if (Math.abs(worldPitch) < deadzone) worldPitch = 0f;
+            if (Math.abs(screenYaw) < deadzone) screenYaw = 0f;
+            if (Math.abs(screenPitch) < deadzone) screenPitch = 0f;
 
             // Velocity-adaptive exponential smoothing
-            float speed = (float) Math.hypot(worldYaw, worldPitch);
+            float speed = (float) Math.hypot(screenYaw, screenPitch);
             float alpha = Math.min(0.92f, Math.max(0.42f, speed * 2.2f));
 
-            smoothedYaw += alpha * (worldYaw - smoothedYaw);
-            smoothedPitch += alpha * (worldPitch - smoothedPitch);
+            smoothedYaw += alpha * (screenYaw - smoothedYaw);
+            smoothedPitch += alpha * (screenPitch - smoothedPitch);
 
             if (angleListener != null) {
                 angleListener.onAngleUpdate(smoothedPitch, smoothedYaw, true);
@@ -264,8 +286,23 @@ final class AirMouseController implements SensorEventListener {
         }
     }
 
+    private int getDisplayRotation() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                android.view.Display display = context.getDisplay();
+                if (display != null) return display.getRotation();
+            } catch (Exception ignored) {}
+        }
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (wm != null && wm.getDefaultDisplay() != null) {
+            return wm.getDefaultDisplay().getRotation();
+        }
+        return Surface.ROTATION_0;
+    }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         // Not used
     }
 }
+

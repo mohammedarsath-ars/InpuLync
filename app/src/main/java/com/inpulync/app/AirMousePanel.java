@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -15,6 +16,7 @@ import android.widget.Toast;
  * Builds the complete Air Mouse & Presentation / Media surface layout.
  * Embeds the reactive gyro reticle, scroll strip, dedicated click buttons,
  * and presentation/media control decks.
+ * Dynamically adapts between Portrait and Landscape layouts for optimal ergonomics.
  */
 final class AirMousePanel {
 
@@ -22,6 +24,7 @@ final class AirMousePanel {
         void move(int dx, int dy);
         void clickLeft();
         void clickRight();
+        void setMouseButton(String which, boolean down);
         void scroll(int amount);
         void sendKey(int modifier, int usage);
         void sendConsumer(int usage);
@@ -53,34 +56,86 @@ final class AirMousePanel {
 
     View build() {
         int pad = dp(8);
+        boolean isLandscape = activity.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+
+        if (isLandscape) {
+            return buildLandscapeLayout(pad);
+        } else {
+            return buildPortraitLayout(pad);
+        }
+    }
+
+    private View buildPortraitLayout(int pad) {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(pad, 0, pad, pad);
 
-        // 1. Top Options Bar (Calibrate, Mode Lock, Sensitivity)
+        root.addView(buildTopBar(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(44)));
+        root.addView(buildReticleAndScroll(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        root.addView(buildClickRow(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(54)));
+        root.addView(buildDeckTabs(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42)));
+
+        deckContainer = new LinearLayout(activity);
+        deckContainer.setOrientation(LinearLayout.VERTICAL);
+        root.addView(deckContainer, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        updateDeck();
+        return root;
+    }
+
+    private View buildLandscapeLayout(int pad) {
+        LinearLayout root = new LinearLayout(activity);
+        root.setOrientation(LinearLayout.HORIZONTAL);
+        root.setPadding(pad, 0, pad, pad);
+
+        // Left Column: Top options bar + large Reticle & Scroll strip
+        LinearLayout leftCol = new LinearLayout(activity);
+        leftCol.setOrientation(LinearLayout.VERTICAL);
+        leftCol.addView(buildTopBar(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42)));
+        leftCol.addView(buildReticleAndScroll(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        root.addView(leftCol, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.15f));
+
+        // Right Column: Clicks + Presentation/Media Decks
+        LinearLayout rightCol = new LinearLayout(activity);
+        rightCol.setOrientation(LinearLayout.VERTICAL);
+        rightCol.setPadding(dp(8), 0, 0, 0);
+        rightCol.addView(buildClickRow(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)));
+        rightCol.addView(buildDeckTabs(), new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38)));
+
+        deckContainer = new LinearLayout(activity);
+        deckContainer.setOrientation(LinearLayout.VERTICAL);
+        rightCol.addView(deckContainer, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        root.addView(rightCol, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 0.85f));
+
+        updateDeck();
+        return root;
+    }
+
+    private View buildTopBar() {
         LinearLayout topBar = new LinearLayout(activity);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding(0, 0, 0, dp(6));
+        topBar.setPadding(0, 0, 0, dp(4));
 
-        Button calibBtn = neoUi.button("⟲ CALIBRATE", Theme.current.paper);
+        Button calibBtn = neoUi.button("⟲ CENTER", Theme.current.paper);
         calibBtn.setOnClickListener(v -> {
             controller.calibrate();
             feedback.perform(v, HapticFeedbackConstants.KEYBOARD_TAP);
             Toast.makeText(activity, "Air Mouse Centered", Toast.LENGTH_SHORT).show();
         });
-        topBar.addView(calibBtn, new LinearLayout.LayoutParams(dp(110), dp(40)));
+        topBar.addView(calibBtn, new LinearLayout.LayoutParams(dp(94), dp(38)));
 
-        lockBtn = neoUi.button(controller.isAlwaysOn() ? "AIM: ALWAYS ON" : "AIM: HOLD TRIGGER",
+        lockBtn = neoUi.button(controller.isAlwaysOn() ? "AIM: LOCKED" : "AIM: HOLD",
                 controller.isAlwaysOn() ? Theme.current.yellow : Theme.current.blue);
         lockBtn.setOnClickListener(v -> {
             boolean next = !controller.isAlwaysOn();
             controller.setAlwaysOn(next);
-            lockBtn.setText(next ? "AIM: ALWAYS ON" : "AIM: HOLD TRIGGER");
+            lockBtn.setText(next ? "AIM: LOCKED" : "AIM: HOLD");
             lockBtn.setBackground(neoUi.interactiveBackground(next ? Theme.current.yellow : Theme.current.blue));
             feedback.perform(v, HapticFeedbackConstants.KEYBOARD_TAP);
         });
-        LinearLayout.LayoutParams lockParams = new LinearLayout.LayoutParams(0, dp(40), 1);
+        LinearLayout.LayoutParams lockParams = new LinearLayout.LayoutParams(0, dp(38), 1);
         lockParams.setMargins(dp(6), 0, dp(6), 0);
         topBar.addView(lockBtn, lockParams);
 
@@ -93,11 +148,12 @@ final class AirMousePanel {
             feedback.perform(v, HapticFeedbackConstants.KEYBOARD_TAP);
             Toast.makeText(activity, "Sensitivity: " + formatSens(next), Toast.LENGTH_SHORT).show();
         });
-        topBar.addView(sensBtn, new LinearLayout.LayoutParams(dp(84), dp(40)));
+        topBar.addView(sensBtn, new LinearLayout.LayoutParams(dp(82), dp(38)));
 
-        root.addView(topBar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(46)));
+        return topBar;
+    }
 
-        // 2. Reticle + Vertical Scroll Strip
+    private View buildReticleAndScroll() {
         LinearLayout centerSurface = new LinearLayout(activity);
         centerSurface.setOrientation(LinearLayout.HORIZONTAL);
 
@@ -146,19 +202,34 @@ final class AirMousePanel {
                 // Visual touch state handled by view animation
             }
         }));
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(dp(48), LinearLayout.LayoutParams.MATCH_PARENT);
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(dp(46), LinearLayout.LayoutParams.MATCH_PARENT);
         scrollParams.setMargins(dp(6), 0, 0, 0);
         centerSurface.addView(scrollStrip, scrollParams);
 
-        root.addView(centerSurface, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        return centerSurface;
+    }
 
-        // 3. Left Click / Right Click Buttons
+    private View buildClickRow() {
         LinearLayout clickRow = new LinearLayout(activity);
         clickRow.setOrientation(LinearLayout.HORIZONTAL);
-        clickRow.setPadding(0, dp(6), 0, dp(4));
+        clickRow.setPadding(0, dp(4), 0, dp(4));
 
         Button leftClick = neoUi.button("LEFT CLICK", Theme.current.yellow);
-        leftClick.setOnClickListener(v -> host.clickLeft());
+        leftClick.setOnTouchListener((view, event) -> {
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) {
+                feedback.perform(view, HapticFeedbackConstants.KEYBOARD_TAP);
+                host.setMouseButton("left", true);
+                view.animate().scaleX(0.96f).scaleY(0.96f).setDuration(45).start();
+                return true;
+            } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                host.setMouseButton("left", false);
+                view.animate().scaleX(1f).scaleY(1f).setDuration(65).start();
+                return true;
+            }
+            return false;
+        });
+
         Button rightClick = neoUi.button("RIGHT CLICK", Theme.current.coral);
         rightClick.setOnClickListener(v -> host.clickRight());
 
@@ -168,47 +239,42 @@ final class AirMousePanel {
         rightParams.setMargins(dp(6), 0, 0, 0);
         clickRow.addView(rightClick, rightParams);
 
-        root.addView(clickRow, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(56)));
+        return clickRow;
+    }
 
-        // 4. Deck Selector Tabs (Slides vs Media)
+    private View buildDeckTabs() {
         LinearLayout deckTabs = new LinearLayout(activity);
         deckTabs.setOrientation(LinearLayout.HORIZONTAL);
         deckTabs.setPadding(0, 0, 0, dp(4));
 
-        slidesTabBtn = neoUi.button("📊 PRESENTATION DECK", showSlidesDeck ? Theme.current.blue : Theme.current.paper);
+        slidesTabBtn = neoUi.button("📊 SLIDES", showSlidesDeck ? Theme.current.blue : Theme.current.paper);
         slidesTabBtn.setOnClickListener(v -> {
             showSlidesDeck = true;
             updateDeck();
         });
-        mediaTabBtn = neoUi.button("🍿 MEDIA CONTROLS", !showSlidesDeck ? Theme.current.blue : Theme.current.paper);
+        mediaTabBtn = neoUi.button("🍿 MEDIA", !showSlidesDeck ? Theme.current.blue : Theme.current.paper);
         mediaTabBtn.setOnClickListener(v -> {
             showSlidesDeck = false;
             updateDeck();
         });
 
-        LinearLayout.LayoutParams tabL = new LinearLayout.LayoutParams(0, dp(38), 1);
+        LinearLayout.LayoutParams tabL = new LinearLayout.LayoutParams(0, dp(36), 1);
         deckTabs.addView(slidesTabBtn, tabL);
-        LinearLayout.LayoutParams tabR = new LinearLayout.LayoutParams(0, dp(38), 1);
+        LinearLayout.LayoutParams tabR = new LinearLayout.LayoutParams(0, dp(36), 1);
         tabR.setMargins(dp(6), 0, 0, 0);
         deckTabs.addView(mediaTabBtn, tabR);
 
-        root.addView(deckTabs, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42)));
-
-        // 5. Deck Container (Switches between Slides and Media)
-        deckContainer = new LinearLayout(activity);
-        deckContainer.setOrientation(LinearLayout.VERTICAL);
-        root.addView(deckContainer, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(90)));
-
-        updateDeck();
-        return root;
+        return deckTabs;
     }
 
     private void updateDeck() {
         if (deckContainer == null) return;
         deckContainer.removeAllViews();
 
-        slidesTabBtn.setBackground(neoUi.interactiveBackground(showSlidesDeck ? Theme.current.blue : Theme.current.paper));
-        mediaTabBtn.setBackground(neoUi.interactiveBackground(!showSlidesDeck ? Theme.current.blue : Theme.current.paper));
+        if (slidesTabBtn != null)
+            slidesTabBtn.setBackground(neoUi.interactiveBackground(showSlidesDeck ? Theme.current.blue : Theme.current.paper));
+        if (mediaTabBtn != null)
+            mediaTabBtn.setBackground(neoUi.interactiveBackground(!showSlidesDeck ? Theme.current.blue : Theme.current.paper));
 
         if (showSlidesDeck) {
             // Presentation Slides Controls
@@ -226,7 +292,7 @@ final class AirMousePanel {
             LinearLayout.LayoutParams r1Next = new LinearLayout.LayoutParams(0, dp(40), 1);
             r1Next.setMargins(dp(6), 0, 0, 0);
             row1.addView(nextSlide, r1Next);
-            deckContainer.addView(row1, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(44)));
+            deckContainer.addView(row1, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
             LinearLayout row2 = new LinearLayout(activity);
             row2.setOrientation(LinearLayout.HORIZONTAL);
@@ -248,7 +314,7 @@ final class AirMousePanel {
             LinearLayout.LayoutParams r2R = new LinearLayout.LayoutParams(0, dp(40), 1);
             r2R.setMargins(dp(6), 0, 0, 0);
             row2.addView(escBtn, r2R);
-            deckContainer.addView(row2, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(44)));
+            deckContainer.addView(row2, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         } else {
             // Media Controls
             LinearLayout row1 = new LinearLayout(activity);
@@ -270,7 +336,7 @@ final class AirMousePanel {
             LinearLayout.LayoutParams m1R = new LinearLayout.LayoutParams(0, dp(40), 1);
             m1R.setMargins(dp(6), 0, 0, 0);
             row1.addView(nextBtn, m1R);
-            deckContainer.addView(row1, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(44)));
+            deckContainer.addView(row1, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
             LinearLayout row2 = new LinearLayout(activity);
             row2.setOrientation(LinearLayout.HORIZONTAL);
@@ -295,7 +361,7 @@ final class AirMousePanel {
             LinearLayout.LayoutParams m2R = new LinearLayout.LayoutParams(0, dp(40), 1);
             m2R.setMargins(dp(6), 0, 0, 0);
             row2.addView(fullBtn, m2R);
-            deckContainer.addView(row2, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(44)));
+            deckContainer.addView(row2, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         }
     }
 
